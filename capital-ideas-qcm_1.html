@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capital Ideas — Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0d0a;
+    --paper: #f5f0e8;
+    --cream: #ede8da;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --red: #c0392b;
+    --green: #1a6b4a;
+    --muted: #6b6355;
+    --line: #c8bfae;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 2rem 3rem 1.5rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    max-width: 300px;
+    min-width: 150px;
+    margin: 0 2rem;
+    height: 3px;
+    background: var(--line);
+    position: relative;
+  }
+
+  .progress-bar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--gold);
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  .progress-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 4rem 1rem 5rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4rem;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 0.25rem 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .start-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.9rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .start-btn:hover { background: var(--gold); transform: translateY(-2px); }
+
+  /* QUIZ */
+  .quiz-section { display: none; }
+  .quiz-section.active { display: block; }
+
+  .question-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .q-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--line);
+    line-height: 1;
+    min-width: 3rem;
+  }
+
+  .q-meta {
+    border-left: 2px solid var(--line);
+    padding-left: 1rem;
+  }
+
+  .q-category {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    line-height: 1.5;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    width: 100%;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: rgba(184,134,11,0.05);
+    transform: translateX(4px);
+  }
+
+  .option-letter {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--muted);
+    min-width: 1.5rem;
+    transition: color 0.2s;
+  }
+
+  .option-btn.correct {
+    border-color: var(--green);
+    background: rgba(26,107,74,0.08);
+  }
+
+  .option-btn.correct .option-letter { color: var(--green); }
+
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: rgba(192,57,43,0.08);
+  }
+
+  .option-btn.wrong .option-letter { color: var(--red); }
+
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-box {
+    display: none;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    border-left: 3px solid var(--green);
+    background: rgba(26,107,74,0.05);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink);
+    animation: fadeSlide 0.3s ease;
+  }
+
+  .feedback-box.wrong {
+    border-left-color: var(--red);
+    background: rgba(192,57,43,0.05);
+  }
+
+  .feedback-box.show { display: block; }
+
+  .feedback-icon {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+  }
+
+  .next-btn {
+    background: transparent;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 0.75rem 2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: none;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+  }
+
+  .next-btn:hover { background: var(--ink); color: var(--paper); transform: translateX(3px); }
+  .next-btn.show { display: inline-block; }
+
+  /* RESULTS */
+  .results-section {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .results-section.active { display: block; }
+
+  .score-display {
+    margin: 2rem auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream);
+    position: relative;
+  }
+
+  .score-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .score-total {
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  .score-grade {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--gold);
+    margin: 0.5rem 0 1.5rem;
+  }
+
+  .result-msg {
+    color: var(--muted);
+    max-width: 420px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .answers-recap {
+    margin: 3rem 0;
+    text-align: left;
+    border-top: 1px solid var(--line);
+  }
+
+  .recap-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 1.5rem 0 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .recap-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+
+  .recap-icon { font-size: 1rem; min-width: 1.5rem; text-align: center; }
+
+  .recap-q {
+    flex: 1;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .retry-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.9rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .retry-btn:hover { background: var(--gold); transform: translateY(-2px); }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--line);
+    margin: 3rem 0;
+  }
+
+  /* TABS */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 0;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--line);
+    padding: 0.65rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .tab-btn:last-child { border-right: none; }
+  .tab-btn:hover { background: var(--cream); color: var(--ink); }
+  .tab-btn.active { background: var(--ink); color: var(--paper); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* FICHE */
+  .fiche-wrap { padding: 3rem 0 5rem; }
+
+  .fiche-intro {
+    text-align: center;
+    padding: 3rem 1rem 3.5rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3rem;
+  }
+
+  .fiche-intro h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+
+  .fiche-intro h2 em { font-style: italic; color: var(--gold); }
+
+  .fiche-intro p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .partie-block {
+    border: 1.5px solid var(--line);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .partie-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    background: var(--cream);
+    border-bottom: 1px solid var(--line);
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .partie-header:hover { background: #e6e0d0; }
+
+  .partie-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--line);
+    line-height: 1;
+    min-width: 2.5rem;
+  }
+
+  .partie-title-wrap { flex: 1; }
+
+  .partie-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.2rem;
+  }
+
+  .partie-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .partie-chevron {
+    font-size: 0.9rem;
+    color: var(--muted);
+    transition: transform 0.3s;
+  }
+
+  .partie-block.open .partie-chevron { transform: rotate(180deg); }
+
+  .partie-body {
+    display: none;
+    padding: 1.5rem;
+  }
+
+  .partie-block.open .partie-body { display: block; }
+
+  .fiche-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .fiche-row:last-child { border-bottom: none; }
+
+  .fiche-label {
+    padding: 1rem 1rem 1rem 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    border-right: 1px solid var(--line);
+    margin-right: 1rem;
+    display: flex;
+    align-items: flex-start;
+    padding-right: 1rem;
+  }
+
+  .fiche-content {
+    padding: 1rem 0 1rem 1rem;
+    font-size: 0.92rem;
+    line-height: 1.75;
+    color: var(--ink);
+  }
+
+  .fiche-content ul {
+    padding-left: 1.2rem;
+    margin: 0;
+  }
+
+  .fiche-content li {
+    margin-bottom: 0.4rem;
+  }
+
+  .fiche-content strong { font-weight: 500; }
+
+  /* Questions fiche section */
+  .fiche-questions { margin-top: 3.5rem; }
+
+  .fiche-q-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .fiche-q-block {
+    margin-bottom: 1.75rem;
+    border: 1.5px solid var(--line);
+  }
+
+  .fiche-q-head {
+    background: var(--cream);
+    padding: 0.9rem 1.25rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .fiche-q-question {
+    padding: 1rem 1.25rem 0.5rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  .fiche-q-answer {
+    padding: 0.5rem 1.25rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  .fiche-q-answer ul {
+    padding-left: 1.2rem;
+    margin: 0.4rem 0;
+  }
+
+  .fiche-q-answer li { margin-bottom: 0.3rem; }
+
+  .answer-tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 0.15rem 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  @media (max-width: 600px) {
+    .fiche-row { grid-template-columns: 1fr; }
+    .fiche-label { border-right: none; border-bottom: 1px solid var(--line); padding: 0.75rem 0; }
+    .fiche-content { padding: 0.75rem 0; }
+    .tab-btn { padding: 0.6rem 0.9rem; font-size: 0.68rem; letter-spacing: 0.1em; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">Capital Ideas</span>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+  <span class="progress-label" id="progressLabel">0 / 27</span>
+</header>
+
+<div style="max-width:820px;margin:0 auto;padding:0 2rem;">
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tabBtnQuiz" onclick="switchTab('quiz')">Quiz</button>
+    <button class="tab-btn" id="tabBtnFiche" onclick="switchTab('fiche')">Fiche de lecture</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- TAB QUIZ -->
+  <div class="tab-panel active" id="tabQuiz">
+
+  <!-- HERO -->
+  <div class="hero" id="heroSection">
+    <div class="hero-tag">Quiz</div>
+    <h1>Capital<br><em>Ideas</em></h1>
+    <p>Testez votre compréhension des grandes théories de la finance quantitative — de Bachelier à Black-Scholes.</p>
+    <button class="start-btn" onclick="startQuiz()">Commencer le quiz</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="quiz-section" id="quizSection">
+    <div class="question-header">
+      <div class="q-num" id="qNum">01</div>
+      <div class="q-meta">
+        <div class="q-category" id="qCategory">Catégorie</div>
+        <div class="q-text" id="qText">Question...</div>
+      </div>
+    </div>
+
+    <div class="options" id="optionsContainer"></div>
+
+    <div class="feedback-box" id="feedbackBox">
+      <span class="feedback-icon" id="feedbackIcon"></span>
+      <span id="feedbackText"></span>
+    </div>
+
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Question suivante →</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section" id="resultsSection">
+    <div class="hero-tag">Résultats</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:0.5rem;">Votre score</h1>
+    <div class="score-display">
+      <div class="score-number" id="scoreNum">—</div>
+      <div class="score-total" id="scoreDenom">sur 27</div>
+    </div>
+    <div class="score-grade" id="scoreGrade"></div>
+    <p class="result-msg" id="resultMsg"></p>
+
+    <div class="answers-recap">
+      <div class="recap-title">Récapitulatif des réponses</div>
+      <div id="recapRows"></div>
+    </div>
+
+    <button class="retry-btn" onclick="restartQuiz()">Recommencer</button>
+  </div>
+
+  </div><!-- /tabQuiz -->
+
+  <!-- TAB FICHE DE LECTURE -->
+  <div class="tab-panel" id="tabFiche">
+  <div class="fiche-wrap">
+
+    <div class="fiche-intro">
+      <div class="hero-tag">Fiche de lecture</div>
+      <h2>Capital <em>Ideas</em></h2>
+      <p>Résumé structuré par parties et réponses aux questions de la fiche — Peter L. Bernstein</p>
+    </div>
+
+    <!-- PARTIE I -->
+    <div class="partie-block open">
+      <div class="partie-header" onclick="togglePartie(this)">
+        <div class="partie-num">I</div>
+        <div class="partie-title-wrap">
+          <div class="partie-tag">Partie I</div>
+          <div class="partie-title">L'émergence d'une science face à l'intuition — Bachelier &amp; Cowles</div>
+        </div>
+        <div class="partie-chevron">▼</div>
+      </div>
+      <div class="partie-body">
+        <div class="fiche-row">
+          <div class="fiche-label">Problème</div>
+          <div class="fiche-content">Les mouvements des marchés financiers sont-ils prévisibles, et les experts peuvent-ils anticiper les prix des actions ?</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Vision dominante</div>
+          <div class="fiche-content">La finance est perçue comme un jeu de spéculation pure où règnent l'analyse technique (théorie de Dow) et la croyance aveugle en l'intuition des gérants vedettes.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Rupture</div>
+          <div class="fiche-content">En 1900, <strong>Louis Bachelier</strong> modélise mathématiquement les marchés et conclut que l'espérance mathématique d'un spéculateur est nulle (mouvement brownien). Plus tard, <strong>Alfred Cowles</strong> prouve statistiquement que les professionnels de la finance ne parviennent pas à battre le marché de manière systématique.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Limites</div>
+          <div class="fiche-content">Leurs travaux sont totalement ignorés par Wall Street pendant des décennies, par manque de puissance de calcul et parce que les économistes de l'époque rejetaient la finance mathématique.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Impact durable</div>
+          <div class="fiche-content">Ces idées constituent la base absolue de la modélisation probabiliste moderne et annoncent, avec plusieurs décennies d'avance, l'hypothèse de l'efficience des marchés.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTIE II -->
+    <div class="partie-block">
+      <div class="partie-header" onclick="togglePartie(this)">
+        <div class="partie-num">II</div>
+        <div class="partie-title-wrap">
+          <div class="partie-tag">Partie II</div>
+          <div class="partie-title">La révolution du portefeuille et du risque — Markowitz, Tobin, Sharpe</div>
+        </div>
+        <div class="partie-chevron">▼</div>
+      </div>
+      <div class="partie-body">
+        <div class="fiche-row">
+          <div class="fiche-label">Problème</div>
+          <div class="fiche-content">Comment un investisseur doit-il combiner différents actifs pour optimiser le rendement tout en minimisant le risque ?</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Vision dominante</div>
+          <div class="fiche-content">La méthode du « décorateur d'intérieur » prévaut : les gérants sélectionnent les meilleures actions une à une pour chaque client, sans tenir compte des corrélations entre elles.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Rupture</div>
+          <div class="fiche-content"><ul>
+            <li><strong>Markowitz</strong> : chercher le meilleur portefeuille, non la meilleure action — frontière efficiente via diversification et faible covariance.</li>
+            <li><strong>Tobin</strong> : théorème de séparation — un portefeuille risqué universel modulé par des liquidités selon l'aversion au risque.</li>
+            <li><strong>Sharpe</strong> : CAPM/MEDAF — le Bêta isole le risque systématique (incontournable) du risque spécifique (diversifiable).</li>
+          </ul></div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Limites</div>
+          <div class="fiche-content">Hypothèses très restrictives : marchés sans friction, rationalité parfaite, accès identique à l'information pour tous.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Impact durable</div>
+          <div class="fiche-content">Le MEDAF et la théorie du portefeuille deviennent le langage universel de la finance moderne, permettant de chiffrer le risque et d'évaluer la performance réelle des gérants.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTIE III -->
+    <div class="partie-block">
+      <div class="partie-header" onclick="togglePartie(this)">
+        <div class="partie-num">III</div>
+        <div class="partie-title-wrap">
+          <div class="partie-tag">Partie III</div>
+          <div class="partie-title">Le hasard et l'efficience des marchés — Samuelson, Fama</div>
+        </div>
+        <div class="partie-chevron">▼</div>
+      </div>
+      <div class="partie-body">
+        <div class="fiche-row">
+          <div class="fiche-label">Problème</div>
+          <div class="fiche-content">Les prix du marché reflètent-ils la véritable valeur fondamentale des entreprises ?</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Vision dominante</div>
+          <div class="fiche-content">Les analystes fondamentaux pensent pouvoir dénicher des actions sous-évaluées en étudiant les bilans, tandis que les chartistes traquent des tendances récurrentes.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Rupture</div>
+          <div class="fiche-content"><ul>
+            <li><strong>Samuelson</strong> : sur un marché concurrentiel, les prix correctement anticipés fluctuent de manière aléatoire.</li>
+            <li><strong>Fama</strong> : Hypothèse des Marchés Efficients (EMH) — les prix intègrent instantanément toute l'information disponible, rendant les surperformances régulières impossibles.</li>
+          </ul></div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Limites</div>
+          <div class="fiche-content">La finance comportementale révèle le rôle des <em>noise traders</em> (investisseurs irrationnels) qui éloignent temporairement les prix de leur valeur intrinsèque. Des anomalies saisonnières et des réactions excessives montrent que l'efficience n'est pas parfaite.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Impact durable</div>
+          <div class="fiche-content">L'EMH justifie la création de la gestion passive (fonds indiciels) et prouve que la gestion active est un jeu à somme nulle, voire négative après frais.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTIE IV -->
+    <div class="partie-block">
+      <div class="partie-header" onclick="togglePartie(this)">
+        <div class="partie-num">IV</div>
+        <div class="partie-title-wrap">
+          <div class="partie-tag">Partie IV</div>
+          <div class="partie-title">La valorisation et la structure du capital — Williams, Modigliani &amp; Miller</div>
+        </div>
+        <div class="partie-chevron">▼</div>
+      </div>
+      <div class="partie-body">
+        <div class="fiche-row">
+          <div class="fiche-label">Problème</div>
+          <div class="fiche-content">Comment évaluer correctement une entreprise et comment sa structure de financement (dette vs actions) influence-t-elle cette valeur ?</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Vision dominante</div>
+          <div class="fiche-content">L'évaluation se fait par règles empiriques subjectives. Les directeurs financiers pensent pouvoir manipuler la valeur en modifiant le ratio dette/fonds propres.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Rupture</div>
+          <div class="fiche-content"><ul>
+            <li><strong>Williams</strong> : modèle d'actualisation des dividendes — la valeur est la somme des flux de trésorerie futurs actualisés.</li>
+            <li><strong>Modigliani &amp; Miller</strong> : par arbitrage, la valeur d'une entreprise dépend exclusivement de sa rentabilité économique, indépendamment de son mode de financement ou de la distribution de dividendes.</li>
+          </ul></div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Limites</div>
+          <div class="fiche-content">La théorie MM suppose un monde sans impôts. Dans la réalité, la déductibilité fiscale des intérêts rend la dette très attractive — ce qui explique l'essor des LBO et <em>junk bonds</em> dans les années 1980.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Impact durable</div>
+          <div class="fiche-content">L'arbitrage — deux actifs identiques doivent avoir le même prix — devient le pilier central de la finance d'entreprise et de la compréhension des marchés.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTIE V -->
+    <div class="partie-block">
+      <div class="partie-header" onclick="togglePartie(this)">
+        <div class="partie-num">V</div>
+        <div class="partie-title-wrap">
+          <div class="partie-tag">Partie V</div>
+          <div class="partie-title">Le passage de la théorie à la pratique — Gown to Town</div>
+        </div>
+        <div class="partie-chevron">▼</div>
+      </div>
+      <div class="partie-body">
+        <div class="fiche-row">
+          <div class="fiche-label">Problème</div>
+          <div class="fiche-content">Comment transformer ces abstractions théoriques en outils de gestion utilisables au quotidien par les investisseurs professionnels ?</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Vision dominante</div>
+          <div class="fiche-content">Wall Street méprise ces théories considérées comme des hérésies académiques ou de la pure fantaisie (<em>« a lot of baloney »</em>).</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Rupture</div>
+          <div class="fiche-content"><ul>
+            <li><strong>Wells Fargo</strong> : lance les premiers fonds indiciels pour répliquer le marché.</li>
+            <li><strong>Barr Rosenberg (BARRA)</strong> : commercialise des modèles économétriques mesurant précisément le risque (« bêtas bioniques ») pour institutionnaliser la gestion.</li>
+            <li><strong>Black, Scholes &amp; Merton</strong> : formule ultime d'évaluation des options, permettant des couvertures de risque sur mesure.</li>
+          </ul></div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Limites</div>
+          <div class="fiche-content">L'assurance de portefeuille (dérivée de Black-Scholes) a été sévèrement critiquée lors du krach d'octobre 1987 : le modèle supposait une liquidité continue du marché, hypothèse qui a volé en éclats sous la panique.</div>
+        </div>
+        <div class="fiche-row">
+          <div class="fiche-label">Impact durable</div>
+          <div class="fiche-content">Ces innovations ont définitivement transféré le pouvoir des « gourous » boursiers traditionnels vers l'ingénierie financière, l'informatique et les algorithmes de gestion des risques.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTIONS FICHE -->
+    <div class="fiche-questions">
+      <div class="fiche-q-title">
+        <span style="color:var(--gold);">⁕</span> Questions de fiche
+      </div>
+
+      <div class="fiche-q-block">
+        <div class="fiche-q-head">Question 1</div>
+        <div class="fiche-q-question">Quel problème cette théorie cherche-t-elle à résoudre ?</div>
+        <div class="fiche-q-answer">
+          <div class="answer-tag">Réponse</div>
+          <p>L'ensemble des théories vise à résoudre le problème de <strong>l'incertitude et de la gestion du risque</strong> dans les décisions d'investissement :</p>
+          <ul>
+            <li><strong>Markowitz (1952)</strong> : optimiser la sélection de portefeuille via le compromis rendement/risque.</li>
+            <li><strong>Tobin (1958)</strong> : simplifier la sélection en introduisant un actif sans risque (le cash) et le théorème de séparation.</li>
+            <li><strong>Sharpe (1964)</strong> : établir une théorie de l'équilibre de marché pour déterminer le prix d'un actif selon son risque systématique (Bêta).</li>
+            <li><strong>Black, Scholes &amp; Merton (1973)</strong> : évaluer précisément les options, instrument de couverture resté longtemps sans formule rigoureuse.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fiche-q-block">
+        <div class="fiche-q-head">Question 2</div>
+        <div class="fiche-q-question">Quelle vision de la finance domine à ce moment-là ?</div>
+        <div class="fiche-q-answer">
+          <div class="answer-tag">Réponse</div>
+          <p>Avant la révolution des années 1950–1970, la finance est essentiellement <strong>descriptive et fondée sur le jugement individuel</strong> :</p>
+          <ul>
+            <li><strong>L'approche du « Great Man »</strong> : le succès dépend du talent d'un expert à choisir les bons titres un par un.</li>
+            <li><strong>La finance « décoratrice d'intérieur »</strong> : chaque client a un portefeuille unique et sur mesure, sans base théorique globale.</li>
+            <li><strong>La sélection isolée</strong> : on analyse les actions pour leur valeur propre sans comprendre les interactions au sein d'un portefeuille (notion de covariance ignorée).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fiche-q-block">
+        <div class="fiche-q-head">Question 3</div>
+        <div class="fiche-q-question">En quoi cette idée constitue-t-elle une rupture ou une continuité ?</div>
+        <div class="fiche-q-answer">
+          <div class="answer-tag">Réponse</div>
+          <p><strong>Ruptures majeures :</strong></p>
+          <ul>
+            <li><strong>Du titre au portefeuille</strong> : Markowitz affirme qu'un titre ne doit pas être jugé seul, mais par sa contribution au risque total du portefeuille.</li>
+            <li><strong>L'efficience du marché</strong> : Fama et Samuelson démontrent que les prix reflètent toute l'information disponible, rendant les variations imprévisibles.</li>
+            <li><strong>Neutralité de la structure financière</strong> : Modigliani &amp; Miller affirment que la valeur d'une entreprise dépend de ses actifs réels, non de son mode de financement.</li>
+          </ul>
+          <p><strong>Continuités :</strong></p>
+          <ul>
+            <li>Les chercheurs s'appuient sur des travaux anciens oubliés, comme ceux de <strong>Bachelier (1900)</strong> redécouverts dans les années 1950.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fiche-q-block">
+        <div class="fiche-q-head">Question 4</div>
+        <div class="fiche-q-question">Quelles limites ou critiques apparaissent ensuite ?</div>
+        <div class="fiche-q-answer">
+          <div class="answer-tag">Réponse</div>
+          <ul>
+            <li><strong>L'hypothèse de rationalité</strong> : la finance comportementale souligne que les biais psychologiques (peur, excès de confiance) influencent les marchés.</li>
+            <li><strong>La liquidité en temps de crise</strong> : le krach de 1987 montre que les modèles d'assurance de portefeuille supposaient une liquidité continue inexistante en période de panique.</li>
+            <li><strong>L'imperfection du MEDAF</strong> : le Bêta n'explique pas tout le rendement ; la taille de l'entreprise ou le ratio valeur comptable/valeur de marché jouent aussi un rôle.</li>
+            <li><strong>Le « Bruit » (Noise)</strong> : Fischer Black admet que les marchés ne sont pas parfaitement efficients car beaucoup d'investisseurs traitent des rumeurs plutôt que de l'information réelle.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fiche-q-block">
+        <div class="fiche-q-head">Question 5</div>
+        <div class="fiche-q-question">Pourquoi cette idée a-t-elle marqué durablement la finance ?</div>
+        <div class="fiche-q-answer">
+          <div class="answer-tag">Réponse</div>
+          <p>Ces idées ont transformé la finance d'un <em>« art folklorique »</em> en une <strong>discipline scientifique rigoureuse</strong> :</p>
+          <ul>
+            <li><strong>Standardisation de la gestion</strong> : création des fonds indiciels (Wells Fargo), qui gèrent aujourd'hui des milliers de milliards de dollars en acceptant l'efficience du marché.</li>
+            <li><strong>Quantification du risque</strong> : le risque n'est plus une sensation, mais une mesure mathématique (variance, Bêta) que les institutions peuvent gérer précisément.</li>
+            <li><strong>Ingénierie financière</strong> : la formule de Black-Scholes a permis l'explosion des marchés de produits dérivés et d'options, essentiels pour la couverture des risques dans l'économie moderne.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div><!-- /fiche-questions -->
+  </div><!-- /fiche-wrap -->
+  </div><!-- /tabFiche -->
+
+</main>
+
+<script>
+const questions = [
+  {
+    category: "Fondements Historiques",
+    text: "Quelle approche le livre Capital Ideas décrit-il comme prédominante dans l'analyse financière avant les théories probabilistes ?",
+    options: [
+      "L'analyse de la valeur résiduelle.",
+      "La confiance en l'intuition et l'analyse technique des séries temporelles.",
+      "L'efficience semi-forte des marchés.",
+      "La modélisation économétrique des risques extrêmes."
+    ],
+    correct: 1,
+    explanation: "La croyance au « don » et à l'analyse chartiste primait avant l'introduction des statistiques."
+  },
+  {
+    category: "Épistémologie Financière",
+    text: "Le passage d'une vision empirique à une vision scientifique de la finance a d'abord exigé de redéfinir :",
+    options: [
+      "Les principes fiscaux de l'endettement.",
+      "La notion de taux d'intérêt sans risque.",
+      "La compréhension des phénomènes aléatoires et du hasard dans les prix.",
+      "Le cadre légal du rachat d'actions."
+    ],
+    correct: 2,
+    explanation: "Le hasard a été le premier élément conceptualisé par Bachelier et Samuelson, contrecarrant l'idée d'une prévisibilité absolue."
+  },
+  {
+    category: "Théorie du Portefeuille",
+    text: "Concernant la diversification du portefeuille selon Harry Markowitz, quel est l'élément perturbateur que la théorie cherchait à éliminer ?",
+    options: [
+      "L'illusion fiscale.",
+      "Le risque diversifiable (spécifique), en jouant sur les faibles covariances.",
+      "L'inflation anticipée.",
+      "Le risque de marché ou systématique."
+    ],
+    correct: 1,
+    explanation: "Markowitz a prouvé que la combinaison d'actifs peu corrélés réduit le risque spécifique d'un portefeuille."
+  },
+  {
+    category: "Efficience des Marchés",
+    text: "Si la théorie de l'efficience des marchés (Fama) était un postulat strict, comment devrait se comporter un gestionnaire d'actifs rationnel ?",
+    options: [
+      "Il se concentrerait sur la recherche d'actions sous-évaluées via l'analyse fondamentale.",
+      "Il anticiperait les mouvements de masse et achèterait les secteurs surévalués.",
+      "Il abandonnerait l'effort d'analyse pour opter pour une stratégie de gestion passive via un fonds indiciel.",
+      "Il augmenterait son niveau de transaction pour capter les arbitrages à très court terme."
+    ],
+    correct: 2,
+    explanation: "Si tous les prix reflètent toujours la valeur, il est vain et coûteux d'essayer de battre le marché."
+  },
+  {
+    category: "Réception des Théories",
+    text: "L'ouvrage retrace la réception des théories économiques par les professionnels de Wall Street. Laquelle de ces phases résume le mieux cette évolution ?",
+    options: [
+      "Adhésion immédiate dès les travaux de Bachelier.",
+      "Rejet prolongé, méfiance académique, puis assimilation lors de l'informatisation.",
+      "Intégration par les seules banques commerciales et rejet définitif des banques d'investissement.",
+      "Coexistence pacifique des deux mondes sans aucune interaction pratique."
+    ],
+    correct: 1,
+    explanation: "L'intégration a été difficile (« From Gown to Town ») mais a fini par s'imposer face aux données empiriques et aux progrès informatiques."
+  },
+  {
+    category: "Limites des Modèles",
+    text: "Quel événement historique a mis en évidence de manière dramatique les faiblesses inhérentes aux modèles d'évaluation en continu (comme ceux dérivés de Black-Scholes pour l'assurance de portefeuille) ?",
+    options: [
+      "La création des junk bonds.",
+      "La crise des tulipes.",
+      "Le krach de Wall Street d'octobre 1987.",
+      "L'adoption des normes IFRS."
+    ],
+    correct: 2,
+    explanation: "Le krach de 1987 a prouvé que la liquidité du marché n'était pas garantie, ruinant l'hypothèse de couverture continue."
+  },
+  {
+    category: "Synthèse Critique",
+    text: "Selon les enseignements du livre, quelle est la conclusion générale que l'on peut tirer sur la place de la théorie financière ?",
+    options: [
+      "La théorie explique le comportement du marché sans la moindre exception.",
+      "Les modèles mathématiques sont devenus un langage incontournable, tout en nécessitant une intégration de la nature comportementale (noise traders).",
+      "L'abandon progressif des théories de l'efficience au profit d'un retour aux analyses techniques subjectives.",
+      "Le risque a finalement été totalement éliminé des marchés."
+    ],
+    correct: 1,
+    explanation: "Les modèles forment la base, mais les anomalies et le comportement irrationnel imposent des limites aux théories pures."
+  },
+  // --- Nouvelles questions ---
+  {
+    category: "Partie I — Fondements",
+    text: "Quel problème principal les premiers théoriciens, tels que Bachelier et Cowles, cherchaient-ils à résoudre au début du XXe siècle ?",
+    options: [
+      "L'optimisation des structures de capital.",
+      "La prévisibilité des prix des actifs financiers.",
+      "L'influence de la psychologie sur les marchés.",
+      "La méthode de calcul de l'actualisation des dividendes."
+    ],
+    correct: 1,
+    explanation: "Bachelier et Cowles cherchaient avant tout à déterminer si les prix des actifs financiers étaient prévisibles ou suivaient un processus aléatoire."
+  },
+  {
+    category: "Partie I — Fondements",
+    text: "Quelle était la vision dominante à Wall Street avant les travaux de ces pionniers ?",
+    options: [
+      "Une confiance aveugle dans la théorie de l'efficience des marchés.",
+      "Une gestion passive à l'aide de fonds indiciels.",
+      "Une dépendance à l'intuition et à l'analyse technique.",
+      "L'utilisation généralisée des modèles mathématiques de risque."
+    ],
+    correct: 2,
+    explanation: "Avant les pionniers, Wall Street fonctionnait principalement à l'intuition et à l'analyse technique des graphiques de prix."
+  },
+  {
+    category: "Partie I — Fondements",
+    text: "En quoi les travaux d'Alfred Cowles constituaient-ils une rupture ?",
+    options: [
+      "Ils prouvaient statistiquement que les experts ne battaient pas systématiquement le marché.",
+      "Ils introduisaient la formule de valorisation des options.",
+      "Ils démontraient que la valeur d'une entreprise est indépendante de son financement.",
+      "Ils fondaient la théorie de la finance comportementale."
+    ],
+    correct: 0,
+    explanation: "Cowles a démontré par l'analyse statistique que les conseils des experts boursiers ne permettaient pas de battre le marché de façon constante."
+  },
+  {
+    category: "Partie II — Portefeuille",
+    text: "Avant les travaux de Markowitz, quelle approche les gestionnaires adoptaient-ils pour construire un portefeuille ?",
+    options: [
+      "Ils cherchaient à minimiser la covariance entre tous les actifs.",
+      "Ils modulaient un portefeuille de marché avec des liquidités.",
+      "L'approche du « décorateur d'intérieur », sélectionnant les meilleures actions individuellement.",
+      "Ils utilisaient exclusivement l'analyse des « bêtas bioniques »."
+    ],
+    correct: 2,
+    explanation: "L'approche pré-Markowitz consistait à choisir les meilleures actions une à une, sans considérer les interactions entre elles."
+  },
+  {
+    category: "Partie II — Portefeuille",
+    text: "Quel est l'apport central de la théorie du portefeuille de Harry Markowitz ?",
+    options: [
+      "La démonstration que le financement par dette augmente la valeur de l'entreprise.",
+      "L'introduction de la diversification scientifique pour optimiser le couple risque/rendement.",
+      "La preuve que les prix reflètent toujours la valeur fondamentale.",
+      "La création de modèles d'évaluation basés sur le comportement rationnel."
+    ],
+    correct: 1,
+    explanation: "Markowitz a introduit la frontière efficiente, montrant comment diversifier scientifiquement un portefeuille pour maximiser le rendement à risque donné."
+  },
+  {
+    category: "Partie II — Portefeuille",
+    text: "Que démontre le « théorème de séparation » de James Tobin ?",
+    options: [
+      "Le portefeuille risqué optimal est universel, le risque s'ajuste par des liquidités.",
+      "Le risque systématique est distinct du risque spécifique.",
+      "Le capital et la dette sont deux sources de financement équivalentes.",
+      "Le monde académique est déconnecté du monde de Wall Street."
+    ],
+    correct: 0,
+    explanation: "Tobin a montré que tous les investisseurs rationnels détiennent le même portefeuille risqué optimal, et ajustent leur exposition au risque via la part de liquidités."
+  },
+  {
+    category: "Partie II — Portefeuille",
+    text: "Quelle est l'idée clé introduite par William Sharpe avec le CAPM (MEDAF) ?",
+    options: [
+      "L'hypothèse que la gestion active peut toujours être couronnée de succès.",
+      "La séparation entre le risque diversifiable et le risque de marché (mesuré par le Bêta).",
+      "Le fait que les options peuvent être évaluées précisément et à tout moment.",
+      "La théorie selon laquelle les dividendes n'ont aucune importance pour la valeur."
+    ],
+    correct: 1,
+    explanation: "Le CAPM de Sharpe distingue le risque spécifique (éliminable par diversification) du risque systématique (mesuré par le Bêta), seul risque rémunéré."
+  },
+  {
+    category: "Partie III — Marchés",
+    text: "Quel principe essentiel de marché Paul Samuelson a-t-il modélisé ?",
+    options: [
+      "Le lien de cause à effet entre fiscalité et structure de financement.",
+      "Le fait que les investisseurs réagissent toujours de manière irrationnelle.",
+      "Que sur un marché hautement concurrentiel, les prix correctement anticipés fluctuent aléatoirement.",
+      "La supériorité des gestionnaires expérimentés sur l'indexation globale."
+    ],
+    correct: 2,
+    explanation: "Samuelson a formalisé que dans un marché compétitif, les prix intègrent immédiatement l'information et fluctuent donc de manière imprévisible."
+  },
+  {
+    category: "Partie III — Marchés",
+    text: "L'hypothèse des marchés efficients (EMH) promue par Fama suggère que :",
+    options: [
+      "Les prix intègrent instantanément toute l'information disponible.",
+      "Les chartistes (analystes techniques) sont les seuls à générer du profit net positif.",
+      "La valeur intrinsèque d'une action est déterminée uniquement par sa volatilité.",
+      "Les professionnels des marchés peuvent toujours trouver des titres sous-évalués de manière constante."
+    ],
+    correct: 0,
+    explanation: "L'EMH de Fama postule que les prix reflètent à tout moment l'ensemble de l'information disponible, rendant tout sur-rendement systématique impossible."
+  },
+  {
+    category: "Partie III — Marchés",
+    text: "Selon le livre, quelle est une des critiques majeures de l'hypothèse des marchés efficients (EMH) apparue plus tard ?",
+    options: [
+      "Les marchés sont trop prévisibles grâce aux ordinateurs.",
+      "Les « noise traders » (investisseurs irrationnels) peuvent écarter les prix de leur valeur fondamentale.",
+      "L'information est toujours asymétrique de manière systématique.",
+      "Les dividendes ne sont pas suffisamment pris en compte."
+    ],
+    correct: 1,
+    explanation: "Les travaux ultérieurs ont montré que les noise traders peuvent maintenir durablement des déviations de prix par rapport aux fondamentaux."
+  },
+  {
+    category: "Partie IV — Évaluation",
+    text: "Laquelle de ces théories relève principalement de la Partie IV du livre (« Que valent les actions ? ») ?",
+    options: [
+      "Le MEDAF (CAPM) de Sharpe.",
+      "Le modèle de la marche aléatoire de Bachelier.",
+      "La théorie sur la structure du capital de Modigliani-Miller.",
+      "Le théorème de séparation de Tobin."
+    ],
+    correct: 2,
+    explanation: "La théorie MM de Modigliani et Miller, qui porte sur la valeur de l'entreprise et son financement, est au cœur de la partie consacrée à l'évaluation."
+  },
+  {
+    category: "Partie IV — Évaluation",
+    text: "Quel principe révolutionnaire est au cœur des travaux de Modigliani et Miller (Théorie MM) ?",
+    options: [
+      "La valeur d'une entreprise est déterminée par son ratio dette/capitaux propres.",
+      "Le dividende versé détermine le niveau de croissance future.",
+      "La valeur de l'entreprise dépend uniquement de sa rentabilité économique, indépendamment de son financement.",
+      "La diversification réduit systématiquement le coût du capital."
+    ],
+    correct: 2,
+    explanation: "MM ont démontré que dans un marché sans frictions, la structure financière (dette vs capitaux propres) n'affecte pas la valeur économique de l'entreprise."
+  },
+  {
+    category: "Partie IV — Évaluation",
+    text: "Sur quel raisonnement logique repose principalement la théorie de Modigliani-Miller ?",
+    options: [
+      "L'approche empirique (« rules of thumb »).",
+      "L'arbitrage (deux actifs identiques doivent avoir le même prix).",
+      "L'analyse de la corrélation comportementale entre actifs.",
+      "Le principe du retour à la moyenne."
+    ],
+    correct: 1,
+    explanation: "MM fondent leur théorie sur l'argument d'arbitrage : si deux entreprises identiques avaient des valeurs différentes selon leur financement, des arbitragistes élimineraient immédiatement l'écart."
+  },
+  {
+    category: "Partie IV — Évaluation",
+    text: "Quelle est la limite principale de la théorie initiale de Modigliani et Miller dans la pratique ?",
+    options: [
+      "Elle postule des marchés sans frictions et ignore la fiscalité.",
+      "Elle requiert des capacités de calcul informatique trop complexes.",
+      "Elle n'est applicable qu'aux actions et non aux obligations.",
+      "Elle n'intègre pas les coûts de diversification."
+    ],
+    correct: 0,
+    explanation: "La théorie MM repose sur des hypothèses irréalistes : marchés parfaits, absence de fiscalité et de coûts de transaction, ce qui en limite l'application directe."
+  },
+  {
+    category: "Partie V — Application",
+    text: "Quel événement illustre bien le passage « From Gown to Town » (De l'université à la ville) décrit dans la dernière partie ?",
+    options: [
+      "La création des premiers fonds indiciels par Wells Fargo.",
+      "Le krach boursier de 1929.",
+      "Le rejet initial par Wall Street des thèses de Bachelier.",
+      "L'abandon de l'analyse fondamentale."
+    ],
+    correct: 0,
+    explanation: "Wells Fargo a été l'un des premiers à appliquer concrètement les théories académiques en créant les premiers fonds indiciels institutionnels."
+  },
+  {
+    category: "Partie V — Application",
+    text: "Quel a été l'impact durable des modèles économétriques (comme ceux de BARRA) sur la gestion ?",
+    options: [
+      "Ils ont remplacé les gestionnaires par des algorithmes de trading haute fréquence.",
+      "Ils ont permis de quantifier précisément le risque des portefeuilles pour une gestion institutionnelle.",
+      "Ils ont invalidé la notion de diversification.",
+      "Ils ont démontré l'inefficience totale des marchés financiers."
+    ],
+    correct: 1,
+    explanation: "Les modèles de risque comme BARRA ont fourni aux gestionnaires institutionnels des outils pour mesurer et contrôler rigoureusement le risque de leurs portefeuilles."
+  },
+  {
+    category: "Partie V — Application",
+    text: "Quel outil fondamental a été fourni par Black, Scholes et Merton ?",
+    options: [
+      "Un modèle de valorisation des options.",
+      "Une formule mathématique permettant de prédire les crashs boursiers avec certitude.",
+      "Le concept d'actualisation des dividendes.",
+      "L'hypothèse d'efficience des marchés."
+    ],
+    correct: 0,
+    explanation: "Black, Scholes et Merton ont développé la première formule fermée pour valoriser les options, révolutionnant les marchés de produits dérivés."
+  },
+  {
+    category: "Partie V — Application",
+    text: "Quelle critique est associée à l'utilisation mécanique de l'assurance de portefeuille (issue de Black-Scholes) lors du krach de 1987 ?",
+    options: [
+      "Elle ignorait le comportement rationnel des acteurs du marché.",
+      "Elle reposait sur l'hypothèse erronée d'une liquidité continue et illimitée des marchés.",
+      "Elle s'appuyait trop sur l'analyse technique (chartisme).",
+      "Elle ne tenait pas compte des coûts de transaction."
+    ],
+    correct: 1,
+    explanation: "L'assurance de portefeuille supposait que les marchés seraient toujours liquides pour permettre les ventes dynamiques ; le krach de 1987 a démontré la fausseté de cette hypothèse."
+  },
+  {
+    category: "Synthèse",
+    text: "Quelle affirmation résume le mieux l'évolution décrite dans « Capital Ideas » ?",
+    options: [
+      "La finance est passée d'un dogme mathématique à un art subjectif.",
+      "Les théories se sont succédé sans aucun lien entre elles.",
+      "La finance est devenue une science quantitative grâce à l'incorporation progressive des concepts de risque, d'efficience et d'arbitrage.",
+      "La pratique de Wall Street n'a jamais été influencée par la recherche académique."
+    ],
+    correct: 2,
+    explanation: "Capital Ideas retrace précisément comment la rigueur scientifique s'est progressivement imposée à la finance, en intégrant risque, efficience et arbitrage."
+  },
+  {
+    category: "Synthèse",
+    text: "De Bachelier à Black-Scholes, quel est le fil conducteur de cette évolution intellectuelle ?",
+    options: [
+      "La recherche constante de la « meilleure action » à acheter.",
+      "L'abandon progressif de l'évaluation des risques au profit d'une rentabilité garantie.",
+      "L'application de la méthode scientifique et des statistiques pour comprendre et quantifier l'incertitude et le risque.",
+      "La volonté de prouver que les marchés sont toujours irrationnels et imprévisibles."
+    ],
+    correct: 2,
+    explanation: "Le fil conducteur est bien l'application croissante de la méthode scientifique pour appréhender et mesurer le risque et l'incertitude dans les marchés financiers."
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let userAnswers = [];
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('quizSection').classList.add('active');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  const letters = ['A', 'B', 'C', 'D'];
+
+  document.getElementById('qNum').textContent = String(currentQ + 1).padStart(2, '0');
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qText').textContent = q.text;
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('feedbackBox').className = 'feedback-box';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Progress
+  const pct = (currentQ / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${currentQ} / ${questions.length}`;
+}
+
+function selectAnswer(index) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[currentQ];
+  const buttons = document.querySelectorAll('.option-btn');
+  const isCorrect = index === q.correct;
+
+  buttons.forEach(btn => btn.disabled = true);
+  buttons[index].classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) buttons[q.correct].classList.add('correct');
+
+  if (isCorrect) score++;
+  userAnswers.push({ questionIndex: currentQ, userAnswer: index, correct: isCorrect });
+
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback-box show' + (isCorrect ? '' : ' wrong');
+  document.getElementById('feedbackIcon').textContent = isCorrect ? '✓' : '✗';
+  document.getElementById('feedbackText').innerHTML =
+    `<strong>${isCorrect ? 'Bonne réponse !' : 'Réponse incorrecte.'}</strong> ${q.explanation}`;
+
+  const isLast = currentQ === questions.length - 1;
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = isLast ? 'Voir les résultats →' : 'Question suivante →';
+  nb.className = 'next-btn show';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  document.getElementById('quizSection').classList.remove('active');
+  document.getElementById('resultsSection').classList.add('active');
+
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressLabel').textContent = `${questions.length} / ${questions.length}`;
+
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreDenom').textContent = `sur ${questions.length}`;
+
+  const pct = score / questions.length;
+  let grade, msg;
+
+  if (pct === 1) {
+    grade = 'Excellent — 100%';
+    msg = 'Maîtrise parfaite des idées clés de Capital Ideas. Vous avez assimilé avec succès l\'évolution de la finance quantitative.';
+  } else if (pct >= 0.71) {
+    grade = 'Très bien';
+    msg = 'Bonne compréhension des fondements théoriques. Quelques nuances restent à approfondir.';
+  } else if (pct >= 0.57) {
+    grade = 'Satisfaisant';
+    msg = 'Vous saisissez les grandes lignes, mais certaines distinctions conceptuelles méritent une révision.';
+  } else {
+    grade = 'À approfondir';
+    msg = 'Les concepts fondamentaux nécessitent une relecture. La finance quantitative récompense la persévérance.';
+  }
+
+  document.getElementById('scoreGrade').textContent = grade;
+  document.getElementById('resultMsg').textContent = msg;
+
+  const recap = document.getElementById('recapRows');
+  recap.innerHTML = '';
+  userAnswers.forEach(a => {
+    const q = questions[a.questionIndex];
+    const row = document.createElement('div');
+    row.className = 'recap-row';
+    row.innerHTML = `
+      <span class="recap-icon">${a.correct ? '✓' : '✗'}</span>
+      <span class="recap-q">${q.text.substring(0, 80)}…</span>
+    `;
+    row.querySelector('.recap-icon').style.color = a.correct ? 'var(--green)' : 'var(--red)';
+    recap.appendChild(row);
+  });
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  userAnswers = [];
+  answered = false;
+
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressLabel').textContent = `0 / ${questions.length}`;
+
+  document.getElementById('resultsSection').classList.remove('active');
+  document.getElementById('quizSection').classList.add('active');
+  renderQuestion();
+}
+
+function switchTab(tab) {
+  const isQuiz = tab === 'quiz';
+  document.getElementById('tabQuiz').classList.toggle('active', isQuiz);
+  document.getElementById('tabFiche').classList.toggle('active', !isQuiz);
+  document.getElementById('tabBtnQuiz').classList.toggle('active', isQuiz);
+  document.getElementById('tabBtnFiche').classList.toggle('active', !isQuiz);
+  // Show/hide progress bar
+  document.querySelector('.progress-bar-wrap').style.visibility = isQuiz ? 'visible' : 'hidden';
+  document.getElementById('progressLabel').style.visibility = isQuiz ? 'visible' : 'hidden';
+}
+
+function togglePartie(header) {
+  const block = header.closest('.partie-block');
+  block.classList.toggle('open');
+}
+</script>
+</body>
+</html>
